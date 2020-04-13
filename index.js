@@ -2,7 +2,6 @@ const dns = require('dns');
 const fs = require('fs');
 const readline = require('readline');
 
-const whois = require('whois');
 const whoiser = require('whoiser');
 const logUpdate = require('log-update');
 
@@ -48,7 +47,7 @@ function parseFormula(f, f_index = 0, f_prev = []) {
     }
 }
 
-function checkDomains(formula, tld) {
+function checkDomains(formula, tld, rpm) {
     var unchecked_domains = parseFormula(formula);
     var checked_domains = [];
     var available_domains = [];
@@ -63,7 +62,7 @@ function checkDomains(formula, tld) {
     }, 200);
     
     var check_timeout = 0;
-    var check_timeout_step = 500;
+    var check_timeout_step = 60*1000/rpm;
     unchecked_domains.forEach((domain) => {
         promises_domains.push(new Promise((resolve, reject) => {
             check_timeout = check_timeout + check_timeout_step;
@@ -71,7 +70,7 @@ function checkDomains(formula, tld) {
                 domain = domain + '.' + tld;
                 dns.lookup(domain, (err, address, family) => {
                     if (typeof address === 'undefined') {                        
-                        var w = whoiser.domain(domain, {timeout: 1500});
+                        var w = whoiser.domain(domain, {timeout: 5000});
                         w.then(w_data => {
                             if (w_data) {
                                 var w_data_a = w_data[Object.keys(w_data)[0]];
@@ -126,7 +125,9 @@ for (let [config_key, config_value] of Object.entries(config)) {
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
 rl.question('\nFormula (e.g. «abyy»): ', (formula) => {
     rl.question('TLD (e.g. «io»): ', (tld) => {
-        rl.close();
-        checkDomains(formula, tld);        
+        rl.question('Requests per minute (e.g. «20»): ', (rpm) => {
+            rl.close();
+            checkDomains(formula, tld, rpm);
+        });        
     });
 });
