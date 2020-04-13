@@ -89,8 +89,11 @@ function checkDomains(formula, tld, rpm) {
                         e => {
                             checked_domains.push(domain);
                             errors.push(domain);
+                            resolve();                            
+                        }).catch((e) => {
+                            checked_domains.push(domain);
+                            errors.push(domain);
                             resolve();
-                            throw e;
                         });                      
                     } else {
                         checked_domains.push(domain);
